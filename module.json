@@ -1,0 +1,180 @@
+{
+  "id": "pf1-zh-monsters",
+  "title": "PF1 中文怪物图鉴",
+  "description": "用 PFWiki 中文属性块搭建的 3646 个 PF1 怪物与 NPC（怪物图鉴 1–6、NPC 志、怪物志、其他出处）。合集包条目的中文名和说明配合 pf1e_compendium_chn 使用。",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "社区译者（PFWiki 汇集）",
+      "url": "https://pf1.huijiwiki.com"
+    },
+    {
+      "name": "FVTT-CN（合集包汉化底本）",
+      "url": "https://github.com/fvtt-cn"
+    },
+    {
+      "name": "bananaeat（整理）",
+      "url": "https://github.com/bananaeat"
+    }
+  ],
+  "packs": [
+    {
+      "name": "monsters",
+      "label": "怪物图鉴1",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/monsters",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "bestiary2",
+      "label": "怪物图鉴2",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/bestiary2",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "bestiary3",
+      "label": "怪物图鉴3",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/bestiary3",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "bestiary4",
+      "label": "怪物图鉴4",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/bestiary4",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "bestiary5",
+      "label": "怪物图鉴5",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/bestiary5",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "bestiary6",
+      "label": "怪物图鉴6",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/bestiary6",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "npc-codex",
+      "label": "NPC志",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/npc-codex",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "monster-codex",
+      "label": "怪物志",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/monster-codex",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "other",
+      "label": "其他出处的怪物与 NPC",
+      "type": "Actor",
+      "system": "pf1",
+      "path": "packs/other",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "supplement",
+      "label": "补充条目（怪物用）",
+      "type": "Item",
+      "system": "pf1",
+      "path": "packs/supplement",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "PF1 中文怪物",
+      "sorting": "m",
+      "color": "#5b3a29",
+      "packs": [
+        "monsters",
+        "bestiary2",
+        "bestiary3",
+        "bestiary4",
+        "bestiary5",
+        "bestiary6",
+        "npc-codex",
+        "monster-codex",
+        "other",
+        "supplement"
+      ]
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "pf1",
+        "type": "system",
+        "compatibility": {
+          "minimum": "11.0"
+        }
+      }
+    ],
+    "recommends": [
+      {
+        "id": "pf1e_compendium_chn",
+        "type": "module",
+        "reason": "合集包条目（专长、法术、物品）的中文翻译"
+      }
+    ]
+  },
+  "license": "LICENSE",
+  "url": "https://github.com/bananaeat/pf1-zh-monsters",
+  "bugs": "https://github.com/bananaeat/pf1-zh-monsters/issues",
+  "readme": "https://github.com/bananaeat/pf1-zh-monsters#readme",
+  "changelog": "https://github.com/bananaeat/pf1-zh-monsters/blob/main/CHANGELOG.md",
+  "manifest": "https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json",
+  "download": "https://github.com/bananaeat/pf1-zh-monsters/releases/download/v1.0.0/pf1-zh-monsters-bestiary-1.0.0.zip"
+}

@@ -655,7 +655,9 @@ async function skillRanks(actor, p, log) {
   return extra;
 }
 
-async function attackAdjust(actor, log) {
+// dry：只核对不改，返回对不上的攻击（发布前的全量核对用）
+export async function attackAdjust(actor, log, { dry = false } = {}) {
+  const bad = [];
   for (const it of actor.items.filter((i) => i.flags?.["zh-monsters"]?.target)) {
     const t = it.flags["zh-monsters"].target;
     const act = it.defaultAction;
@@ -663,7 +665,7 @@ async function attackAdjust(actor, log) {
     try {
       const r = await act.rollAttack({});
       let now = rollBonus(r);
-      const dmg = await act.rollDamage({});
+      const dmg = act.hasDamage ? await act.rollDamage({}) : null; // 捕网之类没有伤害，rollDamage 会报错
       const roll = Array.isArray(dmg) ? dmg[0] : dmg;
       let dnow = roll ? rollBonus(roll) : 0;
       // rollAttack/rollDamage 不算次要天然攻击；正式使用时系统会再扣 -5、力量减半，这里先算进去
@@ -679,16 +681,23 @@ async function attackAdjust(actor, log) {
       const d = t.bonus[0] - now;
       const dd = t.dmgBonus - dnow;
       const actions = foundry.utils.deepClone(it.system.actions);
-      if (d) actions[0].attackBonus = String(d);
+      if (d) { // 差值是相对现有总值的，要加在原来的补差上（新建的攻击原来是 0）
+        const old = String(actions[0].attackBonus ?? "").trim();
+        const n = /^[+-]?\d+$/.test(old) ? Number(old) + d : old ? null : d;
+        actions[0].attackBonus = n === null ? `${old} + ${d}` : n ? String(n) : "";
+      }
       if (dd && actions[0].damage?.parts?.[0]) actions[0].damage.parts[0].formula += ` + ${dd}`;
+      if ((d || dd) && dry) { bad.push(`${it.name} 攻击${d ? (d > 0 ? "少" : "多") + Math.abs(d) : ""}${dd ? " 伤害差" + dd : ""}`); continue; }
       if (d || dd) {
         await it.update({ "system.actions": actions });
         log.push(`攻击 ${it.name}：加值补 ${d}，伤害补 ${dd}`);
       }
     } catch (e) {
       log.push(`攻击 ${it.name} 计算失败：${e.message}`);
+      bad.push(`${it.name} 计算失败`);
     }
   }
+  return bad;
 }
 
 
@@ -908,6 +917,75 @@ const addFormula = (cur, d) => {
   if (cur == null || cur === "" || !Number.isNaN(n)) return String((Number.isNaN(n) ? 0 : n) + d);
   return `${cur} + ${d}`;
 };
+// Roll Bonuses（ckl-roll-bonuses）认这些物品时看 system.flags.boolean 的键：没有键的，在建物品或打开物品表时会自动补上，
+// 还会替用户选学派/武器（常选错），加值就和我们按属性块补的差值重复。所以照来源条目预先写上键、不写选项：纯 PF1 不认这些键，
+// Roll Bonuses 看到有键就不再自动配置，没选项也就不加值。
+const RB_KEYS = {
+  "Compendium.pf1.feats.Item.n250dFlbykAIAg5Z": ["weapon-focus"],
+  "Compendium.pf1.feats.Item.vWiTqHC4Y3Xn1Pme": ["bonus_finesse", "target_finesse"],
+  "Compendium.pf1.feats.Item.TbOPtIL8Fv8obXtP": ["bonus_crit", "target_weapon-type"],
+  "Compendium.pf1.feats.Item.zKNk7a4XxXsygJ67": ["vital-strike-greater"],
+  "Compendium.pf1.feats.Item.DorPGQ2mifJbMKH8": ["vital-strike-improved"],
+  "Compendium.pf1.feats.Item.26k1Gi7t5BoqxhIj": ["vital-strike"],
+  "Compendium.pf1.feats.Item.53urYIbYYpQuoSLd": ["precise-shot"],
+  "Compendium.pf1.feats.Item.YLCvMNeAF9V31m1h": ["weapon-specialization"],
+  "Compendium.pf1.feats.Item.jKVhOxHu6VmUgFdp": ["spirited-charge"],
+  "Compendium.pf1.feats.Item.IER2MzJrjSvxMlNS": ["weapon-focus-greater"],
+  "Compendium.pf1.feats.Item.V2zY7BltkpSXwejy": ["spell-focus"],
+  "Compendium.pf1.class-abilities.Item.ZfnHhhTFQVo0Lj4P": ["uncanny-dodge-improved"],
+  "Compendium.pf1.feats.Item.asmQDyDYTtuXg8b4": ["weapon-specialization-greater"],
+  "Compendium.pf1.class-abilities.Item.nKbyztRQCU5XMbbs": ["inspiration"],
+  "Compendium.pf-content.pf-feats.Item.TObHyDnM6efGyLqX": ["weapon-focus-mythic"],
+  "Compendium.pf-content.pf-feats.Item.rYLOl3zfFt3by3CE": ["vital-strike-mythic"],
+  "Compendium.pf1.feats.Item.LSykiaxYWzva2boF": ["spell-focus-greater"],
+  "Compendium.pf-content.pf-universal-monster-rules.Item.hRdJOHAkJd2G3ScN": ["flanking-immunity"],
+  "Compendium.pf1.feats.Item.UcEIgufLJlIfhHmu": ["furious-focus"],
+  "Compendium.pf-content.pf-racial-traits.Item.fyRBxVBVyy1gQgfV": ["swarming"],
+  "Compendium.pf1.class-abilities.Item.HAqAsb5H56C6cZm3": ["versatile-performance"],
+  "Compendium.pf-content.pf-feats.Item.l4yE4RGFbORuDfp7": ["elemental-focus-greater"],
+  "Compendium.pf-content.pf-feats.Item.1frgqDSnQFiTq0MC": ["elemental-focus"],
+  "Compendium.pf1.feats.Item.ln2Dhw97Fol1BCxU": ["outflank"],
+  "Compendium.pf1e-archetypes.pf-prestige-features.Item.RmvHgVAjap4eNbPt": ["uncanny-dodge-improved"],
+  "Compendium.pf1e-archetypes.pf-prestige-features.Item.WqHagtAZIfBfVUlq": ["uncanny-dodge-improved"],
+  "Compendium.pf-content.pf-feats.Item.6HVdbIFcRuTq8o7p": ["snake-sidewind"],
+  "Compendium.pf-content.pf-feats.Item.c6WT66xBw9y7KxUn": ["inspiration-focused"],
+  "Compendium.pf1.class-abilities.Item.10EysX8x5hvz48lr": ["solo-tactics"],
+  "Compendium.pf-content.pf-feats.Item.TOMEhAeZsgGHrSH6": ["spell-focus-mythic"],
+};
+export function rbKeys(d) {
+  const keys = RB_KEYS[d._stats?.compendiumSource];
+  if (!keys) return false;
+  for (const k of keys) foundry.utils.setProperty(d, `system.flags.boolean.${k}`, true);
+  delete d.flags?.["ckl-roll-bonuses"];
+  return true;
+}
+
+// Roll Bonuses 的「武器娴熟」不用选项：用力量的天然攻击和灵巧武器，敏捷调整值更高时，它在出手时把公式里的力量换成敏捷。
+// 属性块也是这么算的，所以这些攻击直接改用敏捷，再按属性块补差：纯 PF1 和装了 Roll Bonuses 的结果一样（公式里已有敏捷，它就不换）。
+// 1.0.0 的攻击是在装着 Roll Bonuses 的世界里补差的，纯 PF1 下这些攻击少了敏捷和力量之差。
+const FINESSE = "Compendium.pf1.feats.Item.vWiTqHC4Y3Xn1Pme";
+export function finesseDexUpdates(actor) {
+  if (!actor.items.some((i) => i._stats?.compendiumSource === FINESSE || i.system.flags?.boolean?.bonus_finesse)) return [];
+  const { dex, str } = actor.system.abilities;
+  if ((dex?.mod ?? 0) <= (str?.mod ?? 0)) return [];
+  const out = [];
+  for (const it of actor.items) {
+    if (!["attack", "weapon"].includes(it.type)) continue;
+    const natural = !!it.system.weaponGroups?.total?.has?.("natural") || it.system.subType === "natural";
+    if (!natural && !it.system.properties?.fin) continue; // 和 Roll Bonuses 的 FinesseTarget 同一判定
+    if (it.defaultAction?.ability?.attack !== "str") continue;
+    const actions = foundry.utils.deepClone(it.system.actions);
+    let n = 0;
+    for (const a of actions) { // 原始数据常是 "_default"（武器默认近战用力量），按系统解析后的值判断
+      if ((it.actions?.get(a._id)?.ability?.attack ?? a.ability?.attack) !== "str") continue;
+      a.ability.attack = "dex";
+      n++;
+    }
+    if (n) out.push({ _id: it.id, "system.actions": actions });
+  }
+  return out;
+}
+
 export async function calibrateSpells(actor, p, log) {
   const res = { dcFixed: 0, concFixed: 0, clFixed: 0, ablFixed: 0 };
   const path = (k) => `system.attributes.spells.spellbooks.${k}`;
@@ -1011,6 +1089,7 @@ export async function buildOne(p, folder) {
   }
   // 持有的武器都显示在战斗栏（PF1 默认只在物品栏，战斗栏只列攻击）
   for (const d of base) if (d.type === "weapon") d.system.showInCombat = true;
+  for (const d of base) rbKeys(d);
   for (const d of base) if (d.type !== "class") foundry.utils.setProperty(d, "flags.zh-monsters.mine", true);
   await assignTags(base);
   // 职业物品创建时会按 classAssociations 自动补职业特性；属性块里已经有的就从清单里去掉，免得同一特性出现两份
@@ -1039,6 +1118,8 @@ export async function buildOne(p, folder) {
   const skillChanges = await skillRanks(actor, p, log);
   await adjust(actor, p, log); // HP、种族生命骰豁免进度
   await iterateAdjust(actor, p, log, skillChanges);
+  const fin = finesseDexUpdates(actor);
+  if (fin.length) { await actor.updateEmbeddedDocuments("Item", fin); log.push(`武器娴熟：${fin.length} 个攻击改用敏捷`); }
   await attackAdjust(actor, log);
   // 调职业等级时系统又会补上该等级的职业特性：再去一次重，删了东西就重新补差
   for (let k = 0; k < 3 && (await dedupeClassFeatures(actor, log)); k++) await iterateAdjust(actor, p, log, skillChanges); // 补差又调了等级就再来一次

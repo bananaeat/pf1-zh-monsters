@@ -8,7 +8,7 @@
 import json, re, shutil, subprocess, zipfile
 from pathlib import Path
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 REPO = "bananaeat/pf1-zh-monsters"  # 怪物版发布在这里（GitHub Release 放 zip 和 module.json）
 MODS = Path(r"E:/FoundryV13/data/Data/modules")
 CHN, MON = MODS / "pf1e_compendium_chn", MODS / "pf1-zh-monsters"
@@ -172,6 +172,7 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 ## 需要
 - Foundry VTT v13、Pathfinder 1e 系统。
 - 建议同时装 **pf1e_compendium_chn**（合集包汉化，需要 Babele）：怪物身上的条目已是中文，但从合集包拖新的专长、法术等要靠它。
+- 可以和 **Roll Bonuses** 一起用。专攻、专精、精通重击等专长的加值已经算在数值里，不要在 Roll Bonuses 里给它们选武器或学派。
 
 ## 安装
 - 在 Foundry 的「附加模组 → 安装模组」底部填清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`，以后可以直接在 Foundry 里更新。
@@ -183,6 +184,14 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 """
 
 CHANGELOG = """# 更新记录
+
+## 1.0.1（2026-10-18）
+
+- 修正：有「武器娴熟」的怪物，天然攻击和灵巧武器的攻击加值偏低（少了敏捷与力量调整值之差，最多少 11）。这些攻击现在直接用敏捷计算，再按属性块校准。涉及 473 只怪、718 个攻击（天然攻击 480 个，短剑、匕首、细剑等武器 238 个）。
+- 和 Roll Bonuses 模组兼容：武器娴熟的攻击已经用敏捷，它不会再替换一次；武器专攻、武器专精、法术专攻、精通重击等专长预先带上它的识别标记、不选武器或学派，它不会再自动配置。这些专长的加值已经算在怪物数值里，请不要在 Roll Bonuses 里给它们选武器或学派，否则会重复计算。
+- 全量核对加上了攻击：全部怪物的每个攻击，攻击加值和伤害常数都与属性块一致。
+- 已经拖进世界的怪物不会自动更新，请从合集包重新导入。
+- 已知问题同 1.0.0。
 
 ## 1.0.0（2026-10-18）
 

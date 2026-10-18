@@ -117,9 +117,22 @@
 - 已修：810 个物品上 Roll Bonuses 写的设置去掉，115 个法术 DC 按纯 PF1 重新校准；全量核对除 3 个属性块没写生命骰的怪外全部一致。
 - `zh-monsters/release_test.js`：干净世界抽查（数值、攻击、施法、控制台报错），发布前跑 A（只开本模组）、B（加汉化）两遍。
 
+## 和 Roll Bonuses 共存（2026-10-18，1.0.1）
+
+Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boolean` 的键（spell-focus、weapon-focus……），没有键的，在建物品（preCreateItem）或打开物品表时按名字/来源 id 自动补键，并替用户选学派或武器（`flags.ckl-roll-bonuses`）。要选项的加值（专攻、专精、精通重击、元素专攻）没选项就不加；**武器娴熟**（`bonus_finesse` + `target_finesse`）不用选项，出手时把用力量的天然攻击和灵巧武器的公式里的力量换成敏捷（敏捷更高、公式里还没有敏捷时）。
+- 1.0.0 的问题：攻击是在装着 Roll Bonuses 的 test3d 里补差的，补差算进了它的力量→敏捷替换，所以**纯 PF1 里有武器娴熟的怪攻击偏低**（少敏捷与力量之差，猫、蝮蛇少 6）。以前的全量核对只核了 HP/AC/豁免等，没核攻击，没发现。
+- 修法（`build_actor.js`）：`finesseDexUpdates` 把这些攻击直接改用敏捷，再 `attackAdjust` 按属性块补差（补差改成加在原值上，原来是覆盖，只对新建攻击成立）。纯 PF1 和 Roll Bonuses 结果一样。`rbKeys` 按来源条目预先写上 Roll Bonuses 的键（`RB_KEYS`，30 个来源），不写选项：纯 PF1 不认这些键，Roll Bonuses 看到有键就不再自动配置。
+- 用户不要在这些专长上给 Roll Bonuses 选武器/学派，加值已经在数值里。
+- `zh-monsters/attack_pass.js`：干净世界全量攻击核对（dry）/ 修正（fix）。`zh-monsters/rb_finesse_test.js`：在装着 Roll Bonuses 的世界里正式使用攻击，核对加值。
+
 ## 动作的距离和持续时间（2026-10-18）
 
 汉化的 actions 转换器原来把距离、持续时间的公式（60、@cl）换成「60尺」「1分钟/等级」，PF1 求值失败（控制台 Unresolved StringTerm），建怪时复制进了 2173 只怪（持续 12952 处、距离 3120 处）。转换器已改为只在单位是「特殊／见正文」时换文字；怪物合集包按英文原始数据（`zh-monsters/action_src.json`，由 zh-build/export 生成）还原了 15089 个物品。
+
+## 已发布（2026-10-18）
+
+怪物版 v1.0.0 已发布在 https://github.com/bananaeat/pf1-zh-monsters （公开仓库，Release 附 zip 和 module.json）。清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`。
+发新版：改 `package.py` 的 VERSION 和 CHANGELOG → 停服务器 → `python package.py monsters` → `python release_repo.py` → 在 `E:/FoundryV13/release/pf1-zh-monsters` 提交推送 → 建 Release（标签 vX.Y.Z）并上传 `dist/` 下的 zip 和 module.json。
 
 ## 打包发布（2026-10-18）
 

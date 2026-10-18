@@ -172,7 +172,6 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 ## 需要
 - Foundry VTT v13、Pathfinder 1e 系统。
 - 建议同时装 **pf1e_compendium_chn**（合集包汉化，需要 Babele）：怪物身上的条目已是中文，但从合集包拖新的专长、法术等要靠它。
-- 另有「合成版」（pf1-zh-monsters-full）已经包含汉化；两个版本 id 相同，二选一。
 
 ## 安装
 - 在 Foundry 的「附加模组 → 安装模组」底部填清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`，以后可以直接在 Foundry 里更新。
@@ -180,12 +179,7 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 - 在世界的模组管理里启用。合集包在「PF1 中文怪物」文件夹下。
 - 已经拖进世界的角色不会随模组更新；想要新版，从合集包重新导入。
 
-## 反馈
-数值、译名或规则对不上的，请到 https://github.com/bananaeat/pf1-zh-monsters/issues 反馈，写明怪物名和出处。
-
-## 已知问题
-- 变体职业只按基础职业建；第二套法术书并入第一本；少数属性块没写生命骰的怪 HP 对不上；合集包里没有的条目（3.5 专长、只有神话版的专长、写在法术栏里的领域能力）没有对应物品。
-- 授权与署名见 `NOTICE.md`。
+授权与署名见 `NOTICE.md`。
 """
 
 CHANGELOG = """# 更新记录

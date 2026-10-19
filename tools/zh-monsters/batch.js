@@ -5,7 +5,7 @@
 //   b.runAll({ only: ["怪物图鉴2"] });
 let M = null;
 
-const BOOKS = [
+export const BOOKS = [
   ["怪物图鉴", "pf1-zh-monsters.monsters"],
   ["怪物图鉴2", "pf1-zh-monsters.bestiary2"],
   ["怪物图鉴3", "pf1-zh-monsters.bestiary3"],
@@ -16,14 +16,14 @@ const BOOKS = [
   ["怪物志", "pf1-zh-monsters.monster-codex"],
   ["*", "pf1-zh-monsters.other"], // 其余出处，按书分文件夹
 ];
-const CR_BUCKETS = [[0, 1, "CR 0–1"], [2, 3, "CR 2–3"], [4, 5, "CR 4–5"], [6, 7, "CR 6–7"], [8, 10, "CR 8–10"], [11, 14, "CR 11–14"],
+export const CR_BUCKETS = [[0, 1, "CR 0–1"], [2, 3, "CR 2–3"], [4, 5, "CR 4–5"], [6, 7, "CR 6–7"], [8, 10, "CR 8–10"], [11, 14, "CR 11–14"],
   [15, 19, "CR 15–19"], [20, 99, "CR 20+"]];
 const TMP = "批量（临时）";
 
 const crOf = (a) => Number(a.system.details?.cr?.base ?? 0);
 const num = (R) => (R ? R.total - R.dice.reduce((s, d) => s + d.total, 0) : null);
 
-async function verifyAttacks(actor) {
+export async function verifyAttacks(actor) {
   const bad = [];
   const snap = actor.items.filter((i) => i.system.quantity != null).map((i) => ({ _id: i.id, "system.quantity": i.system.quantity }));
   for (const it of actor.items.filter((i) => i.flags["zh-monsters"]?.target)) {
@@ -129,8 +129,9 @@ export async function fixup(list) {
     const atk = await verifyAttacks(a);
     const pack = game.packs.get(packId);
     await pack.configure({ locked: false });
-    const idx = await pack.getIndex({ fields: ["folder", "sort"] });
-    const old = idx.find((e) => e.name === a.name);
+    const idx = await pack.getIndex({ fields: ["folder", "sort", "flags.zh-monsters.source"] });
+    // 按名字和出处找：「其他出处」包里有同名不同书的（海盗船长：游戏主持人指南 / Isles of the Shackles），只按名字会覆盖掉另一本的
+    const old = idx.find((e) => e.name === a.name && (e.flags?.["zh-monsters"]?.source ?? null) === (p.source || "未知出处"));
     const d = a.toObject();
     delete d._id;
     d.folder = old?.folder ?? null;

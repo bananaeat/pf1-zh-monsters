@@ -8,7 +8,7 @@
 import json, re, shutil, subprocess, zipfile
 from pathlib import Path
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 REPO = "bananaeat/pf1-zh-monsters"  # 怪物版发布在这里（GitHub Release 放 zip 和 module.json）
 MODS = Path(r"E:/FoundryV13/data/Data/modules")
 CHN, MON = MODS / "pf1e_compendium_chn", MODS / "pf1-zh-monsters"
@@ -67,7 +67,7 @@ def build(edition):
     manifest = {
         "id": ID,
         "title": "PF1 中文合集包（汉化 + 中文怪物图鉴）",
-        "description": "PF1e 合集包的中文翻译（Babele；以 FVTT-CN 汉化为底，按 PFWiki 补全、校正），加上用 PFWiki 中文属性块搭建的 3646 个怪物与 NPC（怪物图鉴 1–6、NPC 志、怪物志、其他出处）。需要 Babele。",
+        "description": "PF1e 合集包的中文翻译（Babele；以 FVTT-CN 汉化为底，按 PFWiki 补全、校正），加上用 PFWiki 中文属性块搭建的 3649 个怪物与 NPC（怪物图鉴 1–6、NPC 志、怪物志、其他出处）。需要 Babele。",
         "version": VERSION,
         "compatibility": {"minimum": "13", "verified": "13"},
         "authors": [{"name": "社区译者（PFWiki 汇集）", "url": "https://pf1.huijiwiki.com"}, {"name": "FVTT-CN（合集包汉化底本）", "url": "https://github.com/fvtt-cn"},
@@ -88,7 +88,7 @@ def build(edition):
         for k in ("languages", "esmodules", "styles"):
             manifest.pop(k)
         manifest["title"] = "PF1 中文怪物图鉴"
-        manifest["description"] = "用 PFWiki 中文属性块搭建的 3646 个 PF1 怪物与 NPC（怪物图鉴 1–6、NPC 志、怪物志、其他出处）。合集包条目的中文名和说明配合 pf1e_compendium_chn 使用。"
+        manifest["description"] = "用 PFWiki 中文属性块搭建的 3649 个 PF1 怪物与 NPC（怪物图鉴 1–6、NPC 志、怪物志、其他出处）。合集包条目的中文名和说明配合 pf1e_compendium_chn 使用。"
         manifest["relationships"] = {"systems": manifest["relationships"]["systems"],
                                      "recommends": [{"id": "pf1e_compendium_chn", "type": "module", "reason": "合集包条目（专长、法术、物品）的中文翻译"}]}
         manifest.update({
@@ -148,7 +148,7 @@ README = """# PF1 中文合集包（汉化 + 中文怪物图鉴） v{version}
 
 ## 内容
 - **合集包汉化**：pf1、pf-content、pf1e-archetypes 各合集包的中文名与正文（Babele 翻译），以 FVTT-CN 汉化为底，按 PFWiki 补全和校正；附系统界面翻译。
-- **中文怪物图鉴**（合集包文件夹「PF1 中文怪物」）：怪物图鉴 1–6、NPC 志、怪物志、其他出处，共 3646 个怪物与 NPC，另有「补充条目」（合集包里没有、怪物要用的攻击、能力、药水卷轴魔杖）。
+- **中文怪物图鉴**（合集包文件夹「PF1 中文怪物」）：怪物图鉴 1–6、NPC 志、怪物志、其他出处，共 3649 个怪物与 NPC，另有「补充条目」（合集包里没有、怪物要用的攻击、能力、药水卷轴魔杖）。
   - 专长、法术、能力、职业、种族、装备都复制自 pf1 / pf-content 合集包里的同一条目；HP、AC、豁免、BAB、CMB/CMD、先攻、技能、施法者等级、专注、法术 DC 由 PF1 自动计算，与属性块的差值放在「属性块修正」能力和法术书公式里，结果与属性块一致。
   - 每个怪物有种族（核心种族或怪物自身），能力分在种族特性 / 职业能力；魔法武器的附魔附规则说明，常见附魔已做成攻击伤害（炽焰等不倍增、爆发类重击加值、神圣与破敌为条件加值）。
 
@@ -166,7 +166,7 @@ README = """# PF1 中文合集包（汉化 + 中文怪物图鉴） v{version}
 
 README_MON = """# PF1 中文怪物图鉴 v{version}
 
-用 PFWiki 中文属性块搭建的 3646 个 PF1 怪物与 NPC（合集包文件夹「PF1 中文怪物」：怪物图鉴 1–6、NPC 志、怪物志、其他出处，另有「补充条目」）。
+用 PFWiki 中文属性块搭建的 3649 个 PF1 怪物与 NPC（合集包文件夹「PF1 中文怪物」：怪物图鉴 1–6、NPC 志、怪物志、其他出处，另有「补充条目」）。
 数值由 PF1 自动计算并校准到属性块（HP、AC、豁免、BAB、CMB/CMD、先攻、技能、施法者等级、专注、法术 DC）；每个怪物有种族，能力分在种族特性 / 职业能力；魔法武器附附魔说明与常见附魔的攻击效果。
 
 ## 需要
@@ -184,6 +184,16 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 """
 
 CHANGELOG = """# 更新记录
+
+## 1.0.2（2026-10-19）
+
+- 跟进 PFWiki 到 2026-10-19 的更新：618 个属性块有改动，按新版重建（名词统一，如「锐锋」「冻寒」「近距射击」；装备、能力、专长、法术等的修订；传记文字）。
+- 89 个 NPC 在维基上改了名字（NPC 志、游戏主持人指南等，87 个中文名、2 个英文名），合集包里换成新名字；新增 4 个属性块（惧怖冒险）；删掉 1 个维基上已经没有的（进化神话枭熊）。共 3649 个。
+- 185 个原先标注「AI 从英文译出」的属性块已在维基上人工校对，去掉了标注；现在还有 1329 个带标注。
+- 修正：游戏主持人指南的「海盗船长」有两份、Isles of the Shackles 的「海盗船长」（CR 5）缺失，现在各一份。
+- 补充条目同步：新增 5 个卷轴、魔杖。
+- 改动和新增的属性块都在干净世界里重建，数值和攻击全部与属性块一致。
+- 已经拖进世界的怪物不会自动更新，请从合集包重新导入。
 
 ## 1.0.1（2026-10-18）
 

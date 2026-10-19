@@ -5,6 +5,7 @@
 2. PFWiki 条目和页面：维基标题/条目名 → english_name → 合集包里同名英文条目。
 属性块里的 [[链接]] 指向维基标题，没链接的写的是条目中文名，两种都要能查。
 """
+import os
 import json
 import pickle
 import re
@@ -44,7 +45,7 @@ def zh_of(bilingual):
 
 def main():
     E, P, S, PE = pickle.loads(Path(r"E:/FoundryV13/zh-build/wiki_cache.pkl").read_bytes())
-    redirects = json.loads(Path(r"E:/PF/PFWiki/release/pf1-zh-wiki-data/wikitext/redirects.json").read_text(encoding="utf8"))
+    redirects = json.loads((Path(os.environ.get("PFWIKI_EXPORT") or r"E:/PF/PFWiki/release/pf1-zh-wiki-data") / "wikitext/redirects.json").read_text(encoding="utf8"))
     redirects = redirects if isinstance(redirects, dict) else {r["from"]: r["to"] for r in redirects}
 
     idx = {}

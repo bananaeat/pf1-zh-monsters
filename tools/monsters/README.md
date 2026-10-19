@@ -125,6 +125,17 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 - 用户不要在这些专长上给 Roll Bonuses 选武器/学派，加值已经在数值里。
 - `zh-monsters/attack_pass.js`：干净世界全量攻击核对（dry）/ 修正（fix）。`zh-monsters/rb_finesse_test.js`：在装着 Roll Bonuses 的世界里正式使用攻击，核对加值。
 
+## 跟维基更新（2026-10-19，1.0.2）
+
+维基上的属性块改了之后，只重建有改动的怪：
+1. PFWiki 的站点快照（`E:/PF/PFWiki/build/site_dump.json.gz`）由 PFWiki 那边刷新（要登录，不在这里做）。
+2. `python E:/FoundryV13/zh-build/src/wiki_fresh.py`：用快照离线生成一份同格式的导出到 `zh-build/wiki_fresh/`（借 PFWiki `tools/export_repo.py` 的解析函数，不访问站点；分类用它的缓存，新页取正文里的 `[[分类:…]]`；模板和 Data 表沿用上一版）。不动 PFWiki 的 release 目录。
+3. 设环境变量 `PFWIKI_EXPORT=E:/FoundryV13/zh-build/wiki_fresh`，删掉 `zh-build/wiki_cache.pkl`（先备份），依次跑 `index.py`、`audit.py`、`supplement.py`（旧的 index.json、gear_index.json、plans_all.json、supplement.json 都先备份成 `_1011`）。
+4. 新旧 plans_all 比对出 added / changed / removed（键：中文名、英文名、出处），写成 `zh-monsters/delta_<日期>.json`。
+5. 干净世界里 `(await import('/zh-monsters/wiki_sync.js?v='+Date.now())).run('delta_<日期>.json')`：先同步补充合集包，删 removed，重建 changed 和 added（替换的沿用原文件夹，新的按 CR／出处放），每只都核对数值和攻击。
+- **干净世界要开 pf-content 和 pf1e-archetypes**：建怪时附魔、专长等要从这两个合集包取（它们只有内容、没有自动化，不影响校准）。只开四个模组时建怪会在附魔索引处报错。
+- 1.0.2 这次：618 个属性块有改动（名词统一，如锐锋、冻寒、近距射击；装备、能力、专长的修订），89 个 NPC 改了名（87 个中文名、2 个英文名），新增 4 个（惧怖冒险），删 1 个（进化神话枭熊）；AI 翻译标注从 1514 减到 1329。
+
 ## 动作的距离和持续时间（2026-10-18）
 
 汉化的 actions 转换器原来把距离、持续时间的公式（60、@cl）换成「60尺」「1分钟/等级」，PF1 求值失败（控制台 Unresolved StringTerm），建怪时复制进了 2173 只怪（持续 12952 处、距离 3120 处）。转换器已改为只在单位是「特殊／见正文」时换文字；怪物合集包按英文原始数据（`zh-monsters/action_src.json`，由 zh-build/export 生成）还原了 15089 个物品。
@@ -132,6 +143,7 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 ## 已发布（2026-10-18）
 
 怪物版 v1.0.0 已发布在 https://github.com/bananaeat/pf1-zh-monsters （公开仓库，Release 附 zip 和 module.json）。清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`。
+- v1.0.1（2026-10-18）：武器娴熟攻击修正 + Roll Bonuses 兼容，见上面「和 Roll Bonuses 共存」。发布说明 `E:/FoundryV13/release/release_notes_1.0.1.md`。
 发新版：改 `package.py` 的 VERSION 和 CHANGELOG → 停服务器 → `python package.py monsters` → `python release_repo.py` → 在 `E:/FoundryV13/release/pf1-zh-monsters` 提交推送 → 建 Release（标签 vX.Y.Z）并上传 `dist/` 下的 zip 和 module.json。
 
 ## 打包发布（2026-10-18）

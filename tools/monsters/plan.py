@@ -440,16 +440,24 @@ def consumable(nm, inner, qty, raw):
     if not m:
         return None
     core, kind = (m.group(1), m.group(2)) if m.group(1) else (m.group(4), m.group(3))
+    core = re.sub(r"^[+＋]\s*\d+\s*", "", core)  # 「+3树肤术药水」：加值是法术效果，法术名是树肤术
     kind = {"之油": "油"}.get(kind, kind)
     uuid, _, _ = lookup("spell", core.strip())
     if not uuid:
         return None
     cl = re.search(r"(?:CL|施法者等级)\s*(\d+)", inner or "")
     ch = re.search(r"(\d+)\s*(?:发|次|charges)", inner or "")
+    dice = re.search(r"(\d+)\s*[dD]\s*(\d+)\s*([+＋]\s*\d+)?\s*(?:发|次|charges)", inner or "")
+    if dice:  # 随机充能「1D20 +30 发」：取平均值（向下取整）
+        n, f, plus = int(dice.group(1)), int(dice.group(2)), int(re.sub(r"\D", "", dice.group(3) or "0") or 0)
+        ch = None
+        charges_avg = n * (f + 1) // 2 + plus
+    else:
+        charges_avg = None
     typ, cl = dict(CONS)[kind], int(cl.group(1)) if cl else None
     key = f"cons:{typ}:{uuid}:{cl or 0}"
     return {"consumable": typ, "spell": uuid, "cl": cl, "key": key, "uuid": supp_uuid(key),
-            "charges": int(ch.group(1)) if ch else None, "qty": qty, "zh": nm, "raw": raw}
+            "charges": int(ch.group(1)) if ch else charges_avg, "qty": qty, "zh": nm, "raw": raw}
 
 
 def gear_list(r):
@@ -490,8 +498,8 @@ def gear_list(r):
         xm = re.search(r"\s*[xX×]\s*(\d+)\s*$", nm)
         if xm:
             qty, nm = int(xm.group(1)), nm[:xm.start()]
-        inner = re.search(r"[（(](.*)[）)]", nm)
-        nm = re.sub(r"[（(].*$", "", nm).strip()
+        inner = re.search(r"[（(【\[](.*)[）)】\]]", nm)  # 「魔法飞弹魔杖【CL 5，1D20 +30 发充能】」「强酸箭魔杖[50 发]」
+        nm = re.sub(r"[（(【\[].*$", "", nm).strip()
         pm = re.search(r"\s*\+(\d)\s*", nm)
         core = re.sub(r"\s*\+\d\s*", "", nm).strip() if pm else nm
         if ALIASF.get("gear", {}).get(core):
@@ -589,6 +597,14 @@ def plan_for(e):
             nm = re.sub(r"\s*[+\-–]?\d+.*$", "", nm).strip()
             if nm and not re.match(r"^\d", nm):
                 named.append({"name": nm, "field": fld, "raw": part})
+    # 属性块行里的写法常是简称（「狂乱（30 尺）」↔ 特殊能力全文「狂乱灵气」）：并到全文那一条，带上这一行（DC、范围在这里），不另建一条
+    full_names = [x["name"] for x in sa_text]
+    line_of = {}
+    for a in named:
+        hits = [t for t in full_names if t == a["name"]] or [t for t in full_names if t.startswith(a["name"])]
+        if len(hits) == 1:
+            line_of.setdefault(hits[0], a["raw"])
+            a["alias_of"] = hits[0]
     abil_items = []
     seen = set()
     page_ab = extras.page_abilities(E_ALL, special_abilities)
@@ -598,7 +614,7 @@ def plan_for(e):
     sib = {**tpl, **page_ab.get(r.get("family") or "", {}), **page_ab.get(e["title"], {})}
     for a in sa_text + named:
         nm = a["name"]
-        if nm in seen:
+        if nm in seen or (a.get("alias_of") and a["alias_of"] != nm):
             continue
         seen.add(nm)
         if not any(x["name"] == nm for x in sa_text):
@@ -611,7 +627,8 @@ def plan_for(e):
             uuid, _, _ = lookup("ability", ABIL_ALIAS.get(nm, nm))
         if not uuid and nm.endswith("凝视"):
             uuid, _, _ = lookup("ability", "凝视")  # 石化凝视等：挂通用规则「凝视」，具体效果写在前面
-        if not uuid and nm not in sib:
+        own = any(x["name"] == nm for x in sa_text)  # 属性块自己有全文的，不去套同名的职业能力（狂乱灵气 ≠ 战祭的「狂乱」祝福）
+        if not uuid and nm not in sib and not own:
             uuid, _, _ = lookup("classfeat", nm)  # 职业能力（死灵学派的墓穴之触等）
         if not uuid and nm not in sib:
             uuid = G["racialtrait"]["zh"].get(nm)  # 种族特性（防御训练、兽人凶猛……）
@@ -629,7 +646,7 @@ def plan_for(e):
                 if uuid:
                     break
         full = next((x for x in sa_text if x["name"] == nm), None)
-        raw_line = links_to_names(a.get("raw", ""))
+        raw_line = links_to_names(a.get("raw") or line_of.get(nm, ""))
         text = w2h(full["text"]) if full else ""
         if not text and raw_line:
             # 没有专门的全文：放属性块里那一行（对上通用规则的，搭建时再接上规则说明）

@@ -125,6 +125,16 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 - 用户不要在这些专长上给 Roll Bonuses 选武器/学派，加值已经在数值里。
 - `zh-monsters/attack_pass.js`：干净世界全量攻击核对（dry）/ 修正（fix）。`zh-monsters/rb_finesse_test.js`：在装着 Roll Bonuses 的世界里正式使用攻击，核对加值。
 
+## 能力、装备的系统性修正（2026-10-20）
+
+用户报了四只（双尾虫怪多一把剑、狂乱灵气多了战祭祝福的描述、没有魔法飞弹魔杖；霜虫死亡阵痛没伤害；邪刻魔凝视 DC 少 2；饕餮 HP 属性那栏空着），按类型全量扫了一遍：
+- **属性块行丢了**（DC 少、范围没了，78 处）：特殊能力有全文的，`plan.py` 先处理全文那条并记成已见，特殊攻击/灵光栏里带 DC 的那一行就被跳过。现在把那一行并到全文那条的 `raw`，参数先从这一行取。
+- **简称多建一条**（75 只）：灵光栏写「狂乱（30 尺）」，全文是「狂乱灵气」，原来两条都建，简称那条还去套了同名职业能力（战祭的「狂乱」祝福）。现在简称并到唯一能前缀对上的全文那条；属性块自己有全文的能力不再去查职业能力。
+- **伤害只从属性块行取**：现在行里没写伤害时，从全文「造成 … 伤害」那一句取，几段都要（`extras.py` 的 `damages`，`applyParams` 全写进去）。物理伤害类型也认（穿刺、钝击、挥砍）。
+- **装备**：括注认【】和 [ ]；随机充能「1D20 +30 发」取平均值（向下取整）；「+3树肤术药水」去掉加值再找法术。攻击行和装备行的同一把武器（精致 / 精制品 / 精工、+1 后面有没有空格）建造时统一比对，不再多一把（`gearKey`）。
+- 饕餮这类构装体的 HP 属性故意留空（没有体质，不加属性 HP），不是漏选。
+- 重建了参数、规则链接或装备有变化的 930 只和维基新增的 75 只（共 3724）；只多了「属性块原文」备注的约 1350 只没重建。
+
 ## 跟维基更新（2026-10-19，1.0.2）
 
 维基上的属性块改了之后，只重建有改动的怪：
@@ -143,6 +153,7 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 ## 已发布（2026-10-18）
 
 怪物版 v1.0.0 已发布在 https://github.com/bananaeat/pf1-zh-monsters （公开仓库，Release 附 zip 和 module.json）。清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`。
+- v1.0.2（2026-10-19）：跟维基更新，见「跟维基更新」。
 - v1.0.1（2026-10-18）：武器娴熟攻击修正 + Roll Bonuses 兼容，见上面「和 Roll Bonuses 共存」。发布说明 `E:/FoundryV13/release/release_notes_1.0.1.md`。
 发新版：改 `package.py` 的 VERSION 和 CHANGELOG → 停服务器 → `python package.py monsters` → `python release_repo.py` → 在 `E:/FoundryV13/release/pf1-zh-monsters` 提交推送 → 建 Release（标签 vX.Y.Z）并上传 `dist/` 下的 zip 和 module.json。
 

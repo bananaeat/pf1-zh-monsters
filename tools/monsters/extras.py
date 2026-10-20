@@ -154,6 +154,14 @@ TEMPLATE = [("锥形", "cone"), ("锥状", "cone"), ("直线", "ray"), ("线形"
             ("爆发", "circle"), ("扩散", "circle"), ("散发", "circle")]
 
 
+PHYS = {"穿刺": "piercing", "钝击": "bludgeoning", "挥砍": "slashing", "负能量": "negative", "正能量": "positive"}
+DMG_WORDS = "|".join(sorted(set(ENERGY) | set(PHYS), key=len, reverse=True))
+
+
+def dmg_type(w):
+    return ENERGY.get(w) or PHYS.get(w)
+
+
 def action_params(raw_line, text="", name=""):
     """从属性块那一行（其次是能力全文）解析 DC、豁免、范围、伤害、持续时间，给能力的动作用。"""
     src = raw_line or ""
@@ -182,7 +190,19 @@ def action_params(raw_line, text="", name=""):
             out["range"] = m.group(1)
     m = re.search(r"(\d+d\d+(?:\s*[+\-]\s*\d+)?)(?![\s+\-\d]*(?:轮|分钟|小时|天))\s*(?:点)?\s*(火焰|寒冷|电击|闪电|酸蚀|强酸|音波|负能量|正能量)?", src)
     if m:
-        out["damage"] = {"formula": m.group(1).replace(" ", ""), "types": [ENERGY.get(m.group(2), {"负能量": "negative", "正能量": "positive"}.get(m.group(2)))] if m.group(2) else []}
+        out["damage"] = {"formula": m.group(1).replace(" ", ""), "types": [dmg_type(m.group(2))] if m.group(2) else []}
+    else:
+        # 属性块那一行没写伤害（多数只写名字）：从全文里「造成 12d6 寒冷伤害和 8d6 穿刺伤害」这种句子取，几段伤害都要
+        parts = []
+        for s in re.finditer(r"造成[^。；]{0,60}伤害", plain[:400]):  # 贪婪到这一句的最后一个「伤害」：「12d6 寒冷伤害和 8d6 穿刺伤害」
+            for d in re.finditer(r"(\d+d\d+(?:\s*[+\-]\s*\d+)?)\s*(?:点)?\s*(" + DMG_WORDS + r")?", s.group(0)):
+                parts.append({"formula": d.group(1).replace(" ", ""), "types": [dmg_type(d.group(2))] if d.group(2) else []})
+            if parts:
+                break
+        if parts:
+            out["damage"] = parts[0]
+            if len(parts) > 1:
+                out["damages"] = parts
     m = re.search(r"(\d+d\d+(?:\s*[+\-]\s*\d+)?|\d+)\s*轮", src)
     if m and "每" not in src[max(0, m.start() - 2):m.start()]:
         out["duration"] = {"units": "round", "value": m.group(1).replace(" ", "")}

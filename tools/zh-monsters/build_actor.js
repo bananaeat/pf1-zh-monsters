@@ -206,7 +206,9 @@ function applyParams(d, prm, rawLine) {
     if (a.measureTemplate?.type) { a.measureTemplate.size = prm.range; a.area = `${prm.range} 尺${SHAPE_ZH[a.measureTemplate.type] || ""}`; }
     else a.range = { units: "ft", value: prm.range };
   } else if (a.area && /[A-Za-z]/.test(a.area)) a.area = "";
-  if (prm.damage) a.damage = { ...(a.damage || {}), parts: [{ formula: prm.damage.formula, types: prm.damage.types }] };
+  // 几段伤害（死亡阵痛：12d6 寒冷 + 8d6 穿刺）都写进去
+  const dmgs = prm.damages?.length ? prm.damages : prm.damage ? [prm.damage] : [];
+  if (dmgs.length) a.damage = { ...(a.damage || {}), parts: dmgs.map((x) => ({ formula: x.formula, types: (x.types || []).filter(Boolean) })) };
   if (prm.duration) a.duration = { ...(a.duration || {}), ...prm.duration };
   const keep = (a.notes?.effect || []).filter((n) => !/[A-Za-z]{4,}/.test(n.replace(/@\w+\[[^\]]*\](\{[^}]*\})?/g, "")))
     // 状态链接的显示文字换成中文状态名（{Paralyzed} → {麻痹}）
@@ -727,6 +729,9 @@ async function ammoItems(items, log) {
   return out;
 }
 
+// 攻击行和装备行里同一件武器的写法不一样（「精致短剑」↔「精制品短剑」、「+1 长剑」↔「+1长剑」）：比对时统一
+const gearKey = (n) => (n || "").replace(/\s+/g, "").replace(/^(\+\d)?(精致品|精制品|精工品|精致|精制|精工|精良)/, "$1精制品");
+
 async function gearItems(p, have, log) {
   const out = [];
   for (const g of p.gearList || []) {
@@ -740,7 +745,7 @@ async function gearItems(p, have, log) {
       out.push(d);
       continue;
     }
-    if (have.has(g.zh) || have.has(g.zh.replace(/\s+/g, ""))) continue;
+    if (have.has(g.zh) || have.has(g.zh.replace(/\s+/g, "")) || have.has(gearKey(g.zh))) continue;
     const d = await findGear(g.zh);
     if (!d) { log.push(`装备没对上：${g.raw}`); continue; }
     have.add(g.zh);
@@ -1075,7 +1080,7 @@ export async function buildOne(p, folder) {
     const w = atks.find((x) => x.type === "weapon" && x.flags["zh-monsters"].target.name === g.zh);
     if (w && g.qty > 1) w.system.quantity = g.qty;
   }
-  base.push(...(await gearItems(p, new Set(atks.filter((a) => a.type === "weapon").flatMap((a) => [a.flags["zh-monsters"].target.name, a.flags["zh-monsters"].target.name.replace(/\s+/g, "")])), log)));
+  base.push(...(await gearItems(p, new Set(atks.filter((a) => a.type === "weapon").flatMap((a) => [a.flags["zh-monsters"].target.name, a.flags["zh-monsters"].target.name.replace(/\s+/g, ""), gearKey(a.flags["zh-monsters"].target.name)])), log)));
   base.push(...(await ammoItems(base, log)));
   base.unshift(await raceItem(p, log));
   for (const d of base) {

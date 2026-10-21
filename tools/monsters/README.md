@@ -125,6 +125,15 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 - 用户不要在这些专长上给 Roll Bonuses 选武器/学派，加值已经在数值里。
 - `zh-monsters/attack_pass.js`：干净世界全量攻击核对（dry）/ 修正（fix）。`zh-monsters/rb_finesse_test.js`：在装着 Roll Bonuses 的世界里正式使用攻击，核对加值。
 
+## 能力 DC 写成公式（2026-10-21）
+
+原来能力（喷吐、凝视、毒素、灵光……）的豁免 DC 是属性块上的固定数字。现在 `build_actor.js` 的 `dcFormulaUpdates` 把它写成 PF 的公式 `10 + floor(@attributes.hd.total / 2) + @abilities.X.mod`，和属性块的差写成常数（能力专攻 +2、属性块本身的出入），所以现在的数值不变，属性值、HD 变了（加模板、属性伤害、增益）DC 跟着变。
+- 依据属性：说明里写的「DC 基于X」；没写的按通用规则惯例（喷吐武器、毒素、疾病、燃烧、恶臭、扰乱心神、麻痹 → 体质；践踏、旋风 → 力量；气势凶猛、凝视、能量吸取、恐惧灵氲、恐怖外貌、支配、麻痹之触、引导负能量 → 魅力；震慑拳、渗透劲 → 感知）。
+- 不死生物体质类的改用魅力（建怪时它们 HP 属性是魅力）；构装体没有体质的不改。类法术能力（Sp）不按 HD，只写 `@abilities.cha.mod + 常数`。
+- 不改：物品自带固定 DC 的（毒药、绊足包、爆雷石）、规则就是固定 DC 的（兽化诅咒）、按职业等级算的（夺命攻击）、找不到依据的。
+- 2026-10-21 全量改了 1921 只的 2913 个能力，改前改后每个动作的 DC 都核对过，一致。`zh-monsters/dc_pass.js`（dry / fix）。
+- 实测：邪刻魔不安凝视 DC 18；魅力 +4 → 20；加「进化生物模板（重建）」（全属性 +4）→ 20。「进化生物模板（快速）」是 PF1 自带的物品，只加攻击、豁免、检定等，没有加 DC 的项，所以 DC 不变（PF1 那条模板本身的问题）。
+
 ## 能力、装备的系统性修正（2026-10-20）
 
 用户报了四只（双尾虫怪多一把剑、狂乱灵气多了战祭祝福的描述、没有魔法飞弹魔杖；霜虫死亡阵痛没伤害；邪刻魔凝视 DC 少 2；饕餮 HP 属性那栏空着），按类型全量扫了一遍：
@@ -153,6 +162,7 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 ## 已发布（2026-10-18）
 
 怪物版 v1.0.0 已发布在 https://github.com/bananaeat/pf1-zh-monsters （公开仓库，Release 附 zip 和 module.json）。清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`。
+- v1.0.3（2026-10-20）：见「能力、装备的系统性修正」。
 - v1.0.2（2026-10-19）：跟维基更新，见「跟维基更新」。
 - v1.0.1（2026-10-18）：武器娴熟攻击修正 + Roll Bonuses 兼容，见上面「和 Roll Bonuses 共存」。发布说明 `E:/FoundryV13/release/release_notes_1.0.1.md`。
 发新版：改 `package.py` 的 VERSION 和 CHANGELOG → 停服务器 → `python package.py monsters` → `python release_repo.py` → 在 `E:/FoundryV13/release/pf1-zh-monsters` 提交推送 → 建 Release（标签 vX.Y.Z）并上传 `dist/` 下的 zip 和 module.json。

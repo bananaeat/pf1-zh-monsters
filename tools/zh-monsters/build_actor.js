@@ -969,6 +969,48 @@ export function rbKeys(d) {
 // 属性块也是这么算的，所以这些攻击直接改用敏捷，再按属性块补差：纯 PF1 和装了 Roll Bonuses 的结果一样（公式里已有敏捷，它就不换）。
 // 1.0.0 的攻击是在装着 Roll Bonuses 的世界里补差的，纯 PF1 下这些攻击少了敏捷和力量之差。
 const FINESSE = "Compendium.pf1.feats.Item.vWiTqHC4Y3Xn1Pme";
+// 能力的豁免 DC 写成 PF 的公式（10 + 半 HD + 属性调整值），属性值、HD 变了（加模板、属性伤害、增益）DC 跟着变。
+// 依据：说明里写的「DC 基于X」，其次是通用规则的惯例（喷吐武器、毒素基于体质，践踏基于力量……）。
+// 和属性块差的部分（能力专攻 +2、属性块本身的出入）写成常数，所以现在的数值和属性块一样。
+// 不改：物品自带固定 DC 的（毒药、绊足包）、规则里就是固定 DC 的（兽化诅咒）、按职业等级算的（夺命攻击）、找不到依据的。
+const ABL_ZH = { 力量: "str", 敏捷: "dex", 体质: "con", 智力: "int", 感知: "wis", 魅力: "cha" };
+const DC_BASIS = [
+  [/^(喷吐武器|毒素|扰乱心神|燃烧|疾病|恶臭|麻痹)(?![之])/, "con"], [/^(践踏|旋风)/, "str"],
+  [/^(气势凶猛|凶威|能量吸取|能量抽离|恐惧灵氲|恐怖外貌|恐惧(?!免疫)|支配|麻痹之触|引导(负|正)能量)|凝视/, "cha"], [/^(震慑拳|渗透劲)/, "wis"],
+];
+export function dcFormulaUpdates(actor) {
+  const hd = actor.system.attributes.hd?.total ?? 0;
+  const undead = actor.system.attributes.hpAbility === "cha"; // 建怪时不死生物的 HP 和强韧都改用魅力
+  const out = [], skipped = [];
+  for (const it of actor.items) {
+    if (!["feat", "attack"].includes(it.type) || !it.system.actions?.length) continue;
+    const name = it.name.replace(/[（(].*$/, "").trim();
+    const txt = (it.system.description?.value ?? "").replace(/<[^>]+>/g, "");
+    const stated = txt.match(/DC[^。；]{0,40}?基于(?:其|它的|他的|她的)?\s*(力量|敏捷|体质|智力|感知|魅力)/);
+    let abl = stated ? ABL_ZH[stated[1]] : DC_BASIS.find(([re]) => re.test(name))?.[1];
+    const sp = it.system.abilityType === "sp" || /（Sp）|\(Sp\)/.test(it.name);
+    let changed = false;
+    const actions = foundry.utils.deepClone(it.system.actions);
+    for (const a of actions) {
+      const dc = String(a.save?.dc ?? "").trim();
+      if (!a.save?.type || !/^\d+$/.test(dc)) continue;
+      if (!abl) { skipped.push(`${it.name} DC ${dc}`); continue; }
+      let k = abl;
+      if (k === "con" && actor.system.abilities.con?.total == null) k = undead ? "cha" : null; // 不死生物的体质类 DC 用魅力；构装体没有体质就不改
+      if (!k || actor.system.abilities[k]?.total == null) { skipped.push(`${it.name} DC ${dc}（没有${abl}）`); continue; }
+      const mod = actor.system.abilities[k].mod;
+      // 类法术能力按法术环级，不按 HD：只跟着属性走
+      const base = sp ? mod : 10 + Math.floor(hd / 2) + mod;
+      const off = Number(dc) - base;
+      const f = sp ? `@abilities.${k}.mod` : `10 + floor(@attributes.hd.total / 2) + @abilities.${k}.mod`;
+      a.save.dc = off ? `${f} ${off > 0 ? "+" : "-"} ${Math.abs(off)}` : f;
+      changed = true;
+    }
+    if (changed) out.push({ _id: it.id, "system.actions": actions });
+  }
+  return { updates: out, skipped };
+}
+
 export function finesseDexUpdates(actor) {
   if (!actor.items.some((i) => i._stats?.compendiumSource === FINESSE || i.system.flags?.boolean?.bonus_finesse)) return [];
   const { dex, str } = actor.system.abilities;
@@ -1141,6 +1183,8 @@ export async function buildOne(p, folder) {
   }
   if (atkTag.length) await actor.updateEmbeddedDocuments("Item", atkTag);
   await calibrateSpells(actor, p, log); // 法术书职业/属性、施法者等级、专注、豁免 DC 对到属性块
+  const dcf = dcFormulaUpdates(actor); // 能力 DC 写成公式（数值不变，属性和 HD 变了会跟着变）
+  if (dcf.updates.length) { await actor.updateEmbeddedDocuments("Item", dcf.updates); log.push(`DC 公式：${dcf.updates.length} 个能力`); }
   // 杂项能力归到种族特性：种族生命骰自动带的黑暗视觉、昏暗视觉等；只留「属性块修正」在杂项
   const toRacial = actor.items.filter((i) => i.type === "feat" && i.system.subType === "misc" && i.name !== ADJ_NAME).map((i) => ({ _id: i.id, "system.subType": "racial" }));
   if (toRacial.length) await actor.updateEmbeddedDocuments("Item", toRacial);

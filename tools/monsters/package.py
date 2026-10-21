@@ -8,7 +8,7 @@
 import json, re, shutil, subprocess, zipfile
 from pathlib import Path
 
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 REPO = "bananaeat/pf1-zh-monsters"  # 怪物版发布在这里（GitHub Release 放 zip 和 module.json）
 MODS = Path(r"E:/FoundryV13/data/Data/modules")
 CHN, MON = MODS / "pf1e_compendium_chn", MODS / "pf1-zh-monsters"
@@ -184,6 +184,14 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 """
 
 CHANGELOG = """# 更新记录
+
+## 1.0.4（2026-10-21）
+
+- 能力的豁免 DC 改成 PF 的公式：10 + 一半 HD + 相关属性调整值（喷吐武器、凝视、毒素、灵光、践踏等），共 1921 只的 2913 个能力。属性值或 HD 变化时（加模板、属性伤害、增益）DC 会跟着变；现在的数值和属性块完全一样（和公式的差写成常数，如能力专攻 +2）。
+- 依据的属性按能力说明里写的「DC 基于X」，没写的按通用规则的惯例（喷吐武器、毒素基于体质，践踏基于力量，气势凶猛、凝视基于魅力……）；不死生物体质类的用魅力；类法术能力只跟着属性走。
+- 毒药、绊足包这类物品自带固定 DC 的，规则就是固定 DC 的（兽化诅咒），按职业等级算的（夺命攻击），保持原来的数字。
+- 注意：PF1 自带的「进化生物模板（快速）」只加攻击、豁免、检定等，不加 DC；用「进化生物模板（重建）」（全属性 +4）时 DC 会跟着变。
+- 已经拖进世界的怪物不会自动更新，请从合集包重新导入。
 
 ## 1.0.3（2026-10-20）
 

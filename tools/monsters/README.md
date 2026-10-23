@@ -125,6 +125,10 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 - 用户不要在这些专长上给 Roll Bonuses 选武器/学派，加值已经在数值里。
 - `zh-monsters/attack_pass.js`：干净世界全量攻击核对（dry）/ 修正（fix）。`zh-monsters/rb_finesse_test.js`：在装着 Roll Bonuses 的世界里正式使用攻击，核对加值。
 
+## 分数 CR（2026-10-23）
+
+PF1 的分数 CR 用的是特殊小数（`pf1.utils.CR.fromString`：1/8 = 0.125、1/6 = 0.1625、1/4 = 0.25、1/3 = 0.3375、1/2 = 0.5），只有这几个值角色卡才显示成分数，经验值也按表算（CR 1/3 = 135）。原来 `crValue` 直接算 1/3 = 0.3333、1/6 = 0.1667，卡上显示小数、经验 133。已改用 PF1 的函数；合集包里 72 只（CR 1/3 的 54 只、1/6 的 18 只）直接改了 `system.details.cr.base`。
+
 ## 能力 DC 写成公式（2026-10-21）
 
 原来能力（喷吐、凝视、毒素、灵光……）的豁免 DC 是属性块上的固定数字。现在 `build_actor.js` 的 `dcFormulaUpdates` 把它写成 PF 的公式 `10 + floor(@attributes.hd.total / 2) + @abilities.X.mod`，和属性块的差写成常数（能力专攻 +2、属性块本身的出入），所以现在的数值不变，属性值、HD 变了（加模板、属性伤害、增益）DC 跟着变。
@@ -162,6 +166,7 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 ## 已发布（2026-10-18）
 
 怪物版 v1.0.0 已发布在 https://github.com/bananaeat/pf1-zh-monsters （公开仓库，Release 附 zip 和 module.json）。清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`。
+- v1.0.4（2026-10-21）：见「能力 DC 写成公式」。
 - v1.0.3（2026-10-20）：见「能力、装备的系统性修正」。
 - v1.0.2（2026-10-19）：跟维基更新，见「跟维基更新」。
 - v1.0.1（2026-10-18）：武器娴熟攻击修正 + Roll Bonuses 兼容，见上面「和 Roll Bonuses 共存」。发布说明 `E:/FoundryV13/release/release_notes_1.0.1.md`。

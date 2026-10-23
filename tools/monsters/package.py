@@ -8,7 +8,7 @@
 import json, re, shutil, subprocess, zipfile
 from pathlib import Path
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 REPO = "bananaeat/pf1-zh-monsters"  # 怪物版发布在这里（GitHub Release 放 zip 和 module.json）
 MODS = Path(r"E:/FoundryV13/data/Data/modules")
 CHN, MON = MODS / "pf1e_compendium_chn", MODS / "pf1-zh-monsters"
@@ -184,6 +184,11 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 """
 
 CHANGELOG = """# 更新记录
+
+## 1.0.5（2026-10-23）
+
+- 修正：CR 1/3 和 1/6 的怪物在角色卡上显示成 0.333…、0.166…，经验值也少（CR 1/3 算成 133，应为 135）。现在用 PF1 自己的分数写法，显示「1/3」「1/6」，经验值按表。共 72 只（CR 1/3 的 54 只、1/6 的 18 只）。
+- 已经拖进世界的怪物不会自动更新，请从合集包重新导入（或在角色卡上把 CR 重新填成 1/3）。
 
 ## 1.0.4（2026-10-21）
 

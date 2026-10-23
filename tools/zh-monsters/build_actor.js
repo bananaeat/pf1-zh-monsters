@@ -14,10 +14,10 @@ async function fromC(uuid) {
   return d;
 }
 
+// 分数 CR 用 PF1 自己的写法（1/3 = 0.3375、1/6 = 0.1625），角色卡才显示「1/3」，经验值也按表算（135 而不是 133）
 function crValue(cr) {
   if (!cr) return 0;
-  const m = String(cr).match(/^(\d+)\/(\d+)$/);
-  return m ? Number(m[1]) / Number(m[2]) : Number(cr) || 0;
+  return pf1.utils.CR.fromString(String(cr).trim()) || 0;
 }
 
 function langKeys(text) {

@@ -2,7 +2,7 @@
   "id": "pf1-zh-monsters",
   "title": "PF1 中文怪物图鉴",
   "description": "用 PFWiki 中文属性块搭建的 3724 个 PF1 怪物与 NPC（怪物图鉴 1–6、NPC 志、怪物志、其他出处）。合集包条目的中文名和说明配合 pf1e_compendium_chn 使用。",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -176,5 +176,5 @@
   "readme": "https://github.com/bananaeat/pf1-zh-monsters#readme",
   "changelog": "https://github.com/bananaeat/pf1-zh-monsters/blob/main/CHANGELOG.md",
   "manifest": "https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json",
-  "download": "https://github.com/bananaeat/pf1-zh-monsters/releases/download/v1.0.5/pf1-zh-monsters-bestiary-1.0.5.zip"
+  "download": "https://github.com/bananaeat/pf1-zh-monsters/releases/download/v1.0.6/pf1-zh-monsters-bestiary-1.0.6.zip"
 }

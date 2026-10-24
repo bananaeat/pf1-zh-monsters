@@ -11,7 +11,7 @@ REPO = Path(r"E:/FoundryV13/release/pf1-zh-monsters")
 BUILT = Path(r"E:/FoundryV13/dist/monsters/pf1-zh-monsters")
 TOOLS = {
     "tools/monsters": (Path(r"E:/FoundryV13/monsters"), ["*.py", "README.md"]),
-    "tools/zh-monsters": (Path(r"E:/FoundryV13/data/Data/zh-monsters"), ["build_actor.js", "batch.js", "release_test.js", "retag.js", "attack_pass.js", "rb_finesse_test.js", "rb_attack_check.js", "wiki_sync.js", "dc_pass.js"]),
+    "tools/zh-monsters": (Path(r"E:/FoundryV13/data/Data/zh-monsters"), ["build_actor.js", "batch.js", "release_test.js", "retag.js", "attack_pass.js", "rb_finesse_test.js", "rb_attack_check.js", "wiki_sync.js", "dc_pass.js", "size_pass.js"]),
 }
 def main():
     REPO.mkdir(parents=True, exist_ok=True)

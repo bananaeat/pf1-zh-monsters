@@ -1136,6 +1136,8 @@ export async function buildOne(p, folder) {
   }
   // 持有的武器都显示在战斗栏（PF1 默认只在物品栏，战斗栏只列攻击）
   for (const d of base) if (d.type === "weapon") d.system.showInCombat = true;
+  // 持有的武器、护甲、衣物照生物的体型（大型食人魔的巨木棒是大型的）：重量按体型算；伤害骰是属性块写死的，不受影响
+  for (const d of base) if (["weapon", "equipment"].includes(d.type) && p.size) d.system.size = p.size;
   for (const d of base) rbKeys(d);
   for (const d of base) if (d.type !== "class") foundry.utils.setProperty(d, "flags.zh-monsters.mine", true);
   await assignTags(base);

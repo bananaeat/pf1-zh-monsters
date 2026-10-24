@@ -125,6 +125,11 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 - 用户不要在这些专长上给 Roll Bonuses 选武器/学派，加值已经在数值里。
 - `zh-monsters/attack_pass.js`：干净世界全量攻击核对（dry）/ 修正（fix）。`zh-monsters/rb_finesse_test.js`：在装着 Roll Bonuses 的世界里正式使用攻击，核对加值。
 
+## 装备体型、warrior 译成「战士」（2026-10-24）
+
+- **装备体型**：非中型生物持有的武器、护甲、衣物原来都是中型（合集包条目的默认）。`build_actor.js` 现在照生物体型设 `system.size`；PF1 里这只影响重量（大型翻倍、小型减半），伤害骰是属性块写死的、AC 不变。`zh-monsters/size_pass.js` 改了 457 只的 1503 件，改前改后核对 AC、CMD、豁免、先攻、HP 和攻击：攻击全部不变；29 只小型/超小型生物（狗头人、地精、小妖精……）装备变轻后不再超重，敏捷不再被限制，AC 多了 1–2，把这 29 只按新装备重建、重新校准，现在和属性块一致。
+- **warrior 写成「战士」**：PFWiki 的中文属性块有的把 NPC 职业 warrior（武者）也写成「战士」，生成时就对到了 Fighter。把 127 个写「战士」的都对过英文（AoN、游戏主持人指南和怪物图鉴 4 的 PDF）：只有怪物图鉴的兽人、人鱼、狗头人是 warrior 1，其余（大地精、兽化人、NPC 志、游戏主持人指南的 NPC 等）英文确实是 fighter。`plan.py` 的 `WARRIOR_FIX` 按（英文名, 出处）改成武者，这 3 只已重建。以后维基改正了就可以删掉这张表。
+
 ## 分数 CR（2026-10-23）
 
 PF1 的分数 CR 用的是特殊小数（`pf1.utils.CR.fromString`：1/8 = 0.125、1/6 = 0.1625、1/4 = 0.25、1/3 = 0.3375、1/2 = 0.5），只有这几个值角色卡才显示成分数，经验值也按表算（CR 1/3 = 135）。原来 `crValue` 直接算 1/3 = 0.3333、1/6 = 0.1667，卡上显示小数、经验 133。已改用 PF1 的函数；合集包里 72 只（CR 1/3 的 54 只、1/6 的 18 只）直接改了 `system.details.cr.base`。
@@ -166,6 +171,7 @@ PF1 的分数 CR 用的是特殊小数（`pf1.utils.CR.fromString`：1/8 = 0.125
 ## 已发布（2026-10-18）
 
 怪物版 v1.0.0 已发布在 https://github.com/bananaeat/pf1-zh-monsters （公开仓库，Release 附 zip 和 module.json）。清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`。
+- v1.0.5（2026-10-23）：见「分数 CR」。
 - v1.0.4（2026-10-21）：见「能力 DC 写成公式」。
 - v1.0.3（2026-10-20）：见「能力、装备的系统性修正」。
 - v1.0.2（2026-10-19）：跟维基更新，见「跟维基更新」。

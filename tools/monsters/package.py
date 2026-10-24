@@ -8,7 +8,7 @@
 import json, re, shutil, subprocess, zipfile
 from pathlib import Path
 
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 REPO = "bananaeat/pf1-zh-monsters"  # 怪物版发布在这里（GitHub Release 放 zip 和 module.json）
 MODS = Path(r"E:/FoundryV13/data/Data/modules")
 CHN, MON = MODS / "pf1e_compendium_chn", MODS / "pf1-zh-monsters"
@@ -184,6 +184,13 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 """
 
 CHANGELOG = """# 更新记录
+
+## 1.0.6（2026-10-24）
+
+- 修正：非中型生物持有的武器、护甲、衣物都是中型的。现在照生物的体型（大型食人魔的巨木棒是大型的），共 457 只的 1503 件。只影响重量，攻击、伤害和 AC 不变。
+  - 其中 29 只小型、超小型生物（狗头人、地精、小妖精等）原来因为装备按中型算太重，敏捷被负重限制；改正后按属性块重新校准，数值仍和属性块一致。
+- 修正：怪物图鉴的兽人、人鱼、狗头人的职业是 NPC 职业武者（warrior），原来按中文「战士」对成了战士（fighter）。其余写「战士」的 124 个都对过英文原文，确实是战士。
+- 已经拖进世界的怪物不会自动更新，请从合集包重新导入。
 
 ## 1.0.5（2026-10-23）
 

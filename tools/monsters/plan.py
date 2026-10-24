@@ -270,6 +270,11 @@ def race_ok(r):
     return not r or r in KNOWN or any(r.startswith(k) for k in KNOWN if len(k) >= 2 and len(k) < len(r))
 
 
+# 中文属性块把 NPC 职业 warrior（武者）也写成「战士」：对照英文原文（AoN、原书 PDF）确认的。
+# 其余写「战士」的 124 只英文确实是 fighter（2026-10-24 查过：NPC 志、游戏主持人指南、怪物志、兽化人等）。
+WARRIOR_FIX = {("Orc", "怪物图鉴"), ("Merfolk", "怪物图鉴"), ("Kobold", "怪物图鉴")}
+
+
 def class_split(name):
     """「食人魔战士」→ 战士（不是魔战士）、「人类炼金术士」→ 炼金术师（不是术士）：
     职业名取能对上合集包的后缀；有几种切法时，选前面那段是已知种族/生物名的，都不是就取最长的职业名。"""
@@ -541,6 +546,8 @@ def plan_for(e):
                 eff_level = int(lvl)
             continue
         uuid, i = class_split(name)
+        if uuid and name.endswith("战士") and not name.endswith("魔战士") and (r.get("english_name"), r.get("source")) in WARRIOR_FIX:
+            uuid = G["class"]["zh"].get("武者") or uuid  # 中文写了「战士」，英文原文是 NPC 职业 warrior
         if uuid:
             classes.append({"uuid": uuid, "name": name, "level": int(lvl)})
             if len(classes) == 1:  # 第一个职业前面的字是种族：「巨魔战士3」「人类 战士 4」「男性沼泽巨人大衮的牧师 10」

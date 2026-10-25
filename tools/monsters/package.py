@@ -8,7 +8,7 @@
 import json, re, shutil, subprocess, zipfile
 from pathlib import Path
 
-VERSION = "1.0.6"
+VERSION = "1.0.7"
 REPO = "bananaeat/pf1-zh-monsters"  # 怪物版发布在这里（GitHub Release 放 zip 和 module.json）
 MODS = Path(r"E:/FoundryV13/data/Data/modules")
 CHN, MON = MODS / "pf1e_compendium_chn", MODS / "pf1-zh-monsters"
@@ -184,6 +184,12 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 """
 
 CHANGELOG = """# 更新记录
+
+## 1.0.7（2026-10-25）
+
+- 天生攻击（啮咬、爪抓、抵撞等）的伤害骰改成 PF1 的体型公式 sizeRoll，共 2678 只的 4541 个攻击。在怪物现在的体型下掷出来和属性块一样；体型变化时（变巨术、模板、变形）伤害骰按 PF1 的体型表跟着变（如中型 1d6 → 大型 1d8，2d8 → 3d8）。
+- 力量等加值和附加的能量伤害不随体型变；人造武器不受影响。
+- 已经拖进世界的怪物不会自动更新，请从合集包重新导入。
 
 ## 1.0.6（2026-10-24）
 

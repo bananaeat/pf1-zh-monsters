@@ -1011,6 +1011,31 @@ export function dcFormulaUpdates(actor) {
   return { updates: out, skipped };
 }
 
+// 天生攻击的伤害骰写成 PF1 的 sizeRoll：起始体型是这只怪现在的体型，所以现在掷出来和属性块一样（大型的 2d8 还是 2d8）；
+// 体型变了（变巨术、模板、变形）按 PF1 的体型骰表跟着变。只换开头那一段骰子，后面的常数（补差）不动。
+export function naturalSizeUpdates(actor) {
+  const sz = actor.system.traits.size?.base ?? actor.system.traits.size;
+  const idx = Object.keys(pf1.config.sizeChart).indexOf(sz);
+  if (idx < 0) return [];
+  const out = [];
+  for (const it of actor.items) {
+    if (it.type !== "attack" || it.system.subType !== "natural") continue;
+    const actions = foundry.utils.deepClone(it.system.actions);
+    let n = 0;
+    for (const a of actions) {
+      for (const part of a.damage?.parts ?? []) {
+        const m = String(part.formula ?? "").match(/^\s*(\d+)d(\d+)(?![\d(])/);
+        if (!m || m[2] === "1") continue; // 1d1：sizeRoll 会直接变成常数 1，留原样
+        part.formula = `sizeRoll(${m[1]}, ${m[2]}, @size, ${idx})` + part.formula.slice(m[0].length);
+        n++;
+        break; // 只换第一段（基础伤害），附加的能量伤害等不随体型变
+      }
+    }
+    if (n) out.push({ _id: it.id, "system.actions": actions });
+  }
+  return out;
+}
+
 export function finesseDexUpdates(actor) {
   if (!actor.items.some((i) => i._stats?.compendiumSource === FINESSE || i.system.flags?.boolean?.bonus_finesse)) return [];
   const { dex, str } = actor.system.abilities;
@@ -1170,6 +1195,8 @@ export async function buildOne(p, folder) {
   const fin = finesseDexUpdates(actor);
   if (fin.length) { await actor.updateEmbeddedDocuments("Item", fin); log.push(`武器娴熟：${fin.length} 个攻击改用敏捷`); }
   await attackAdjust(actor, log);
+  const nat = naturalSizeUpdates(actor); // 天生攻击伤害骰随体型变
+  if (nat.length) { await actor.updateEmbeddedDocuments("Item", nat); log.push(`天生攻击 sizeRoll：${nat.length} 个`); }
   // 调职业等级时系统又会补上该等级的职业特性：再去一次重，删了东西就重新补差
   for (let k = 0; k < 3 && (await dedupeClassFeatures(actor, log)); k++) await iterateAdjust(actor, p, log, skillChanges); // 补差又调了等级就再来一次
   // 攻击和职业特性同名（武僧的徒手打击）：攻击的标识符加 Attack，免得同一只怪里两个标识符一样

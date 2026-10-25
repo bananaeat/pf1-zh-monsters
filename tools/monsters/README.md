@@ -125,6 +125,13 @@ Roll Bonuses（ckl-roll-bonuses 2.23）怎么认物品：看 `system.flags.boole
 - 用户不要在这些专长上给 Roll Bonuses 选武器/学派，加值已经在数值里。
 - `zh-monsters/attack_pass.js`：干净世界全量攻击核对（dry）/ 修正（fix）。`zh-monsters/rb_finesse_test.js`：在装着 Roll Bonuses 的世界里正式使用攻击，核对加值。
 
+## 天生攻击伤害随体型变（2026-10-25）
+
+天生攻击（啮咬、爪抓、抵撞……）的伤害骰原来是属性块上的固定骰子。现在 `build_actor.js` 的 `naturalSizeUpdates` 把开头那段骰子写成 PF1 的 `sizeRoll(骰数, 面数, @size, 现在的体型)`：在怪物现在的体型下掷出来和属性块一样，体型变了（变巨术、模板、变形）按 PF1 的体型骰表跟着变（中型 1d6 → 大型 1d8，2d8 → 3d8，4d6 → 6d6）。后面的常数（力量、补差）和附加的能量伤害不变；人造武器不改。
+- 2026-10-25 全量改了 2678 只的 4541 个天生攻击（`zh-monsters/nat_pass.js`），改前改后掷一次比骰子和常数，全部一致。
+- 1d1 的不改（sizeRoll 会直接变成常数 1，伏行之手、飞翔眼两只已改回）。
+- 测试时要改体型得改种族物品的体型：我们的种族物品带体型，会盖过角色上的。
+
 ## 装备体型、warrior 译成「战士」（2026-10-24）
 
 - **装备体型**：非中型生物持有的武器、护甲、衣物原来都是中型（合集包条目的默认）。`build_actor.js` 现在照生物体型设 `system.size`；PF1 里这只影响重量（大型翻倍、小型减半），伤害骰是属性块写死的、AC 不变。`zh-monsters/size_pass.js` 改了 457 只的 1503 件，改前改后核对 AC、CMD、豁免、先攻、HP 和攻击：攻击全部不变；29 只小型/超小型生物（狗头人、地精、小妖精……）装备变轻后不再超重，敏捷不再被限制，AC 多了 1–2，把这 29 只按新装备重建、重新校准，现在和属性块一致。
@@ -171,6 +178,7 @@ PF1 的分数 CR 用的是特殊小数（`pf1.utils.CR.fromString`：1/8 = 0.125
 ## 已发布（2026-10-18）
 
 怪物版 v1.0.0 已发布在 https://github.com/bananaeat/pf1-zh-monsters （公开仓库，Release 附 zip 和 module.json）。清单地址：`https://github.com/bananaeat/pf1-zh-monsters/releases/latest/download/module.json`。
+- v1.0.6（2026-10-24）：见「装备体型、warrior 译成「战士」」。
 - v1.0.5（2026-10-23）：见「分数 CR」。
 - v1.0.4（2026-10-21）：见「能力 DC 写成公式」。
 - v1.0.3（2026-10-20）：见「能力、装备的系统性修正」。

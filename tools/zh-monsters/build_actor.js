@@ -1133,9 +1133,78 @@ export function spellCheck(actor, p) {
   return bad;
 }
 
+// 属性块 AC 里算进去的法术（法师护甲、护盾术、虔诚护盾、树肤术）：不能做成常驻的「属性块修正」，
+// 要挂一个关着的增益（pf1.buffs），打开后 AC 才和属性块一样（龙之欲 2026-10-28 发现）。
+// 判断：属性块括号里点名了法术；或者怪物会这个法术、括号里有对应的加值、身上又没有能给这个加值的装备。
+const AC_SPELLS = {
+  mageArmor: { spell: "ucc0a31d1y86oleh", buff: "IlO0CNpAIKZtNYu8", part: "armor", touch: false },
+  shieldSpell: { spell: "sz7j540uypmqqvti", buff: "olTpyao476hOEzzm", part: "shield", touch: false },
+  shieldOfFaith: { spell: "y2uhoqr4itdbw5g4", buff: "WgCWQxR53UdVSGPB", part: "deflection", touch: true },
+  barkskin: { spell: "la7kuehewu85ybnt", buff: "kG8EriOOSJmDmYZd", part: "natural", touch: false },
+};
+// 防御护腕的护甲加值（和法师护甲不叠加，取高）
+const bracers = (p) => Math.max(0, ...(p.gearList || []).map((g) => Number((g.zh || "").match(/防御护腕\s*\+\s*(\d)/)?.[1] || 0)));
+export function spellAC(p) {
+  const parts = p.ac?.parts || {};
+  const knows = JSON.stringify([p.spells, p.sla]);
+  const gear = (p.gearList || []).map((g) => g.zh || "").join("|");
+  const out = {};
+  for (const [k, def] of Object.entries(AC_SPELLS)) {
+    let v = parts[k] || 0; // 括号里直接写了法术名
+    if (!v && knows.includes(def.spell) && parts[def.part]) {
+      const pv = parts[def.part];
+      if (k === "mageArmor" && pv === 4 && !/甲(?!虫)/.test(gear) && bracers(p) < 4) v = 4;
+      else if (k === "shieldSpell" && pv === 4 && !/盾(?!徽)/.test(gear)) v = 4;
+      else if (k === "shieldOfFaith" && pv >= 2 && pv <= 5 && !/防护戒指|偏斜/.test(gear)) v = pv;
+      else if (k === "barkskin" && pv >= 2 && pv <= 5 && p.type === "人形生物" && !/天生护甲护符/.test(gear)) v = pv;
+    }
+    if (v) out[k] = v;
+  }
+  return Object.keys(out).length ? out : null;
+}
+// 校准用的 AC：属性块减去法术给的
+export function acTargets(p) {
+  const sp = spellAC(p);
+  if (!sp) return p.ac;
+  let all = 0, touch = 0, nat = 0;
+  for (const [k, v] of Object.entries(sp)) {
+    const d = k === "mageArmor" ? v - bracers(p) : v; // 戴着防御护腕 +N 时，关掉法师护甲只少 4−N
+    all += d; if (AC_SPELLS[k].touch) touch += d; if (k === "barkskin") nat += d;
+  }
+  return { ...p.ac, normal: p.ac.normal - all, touch: p.ac.touch == null ? null : p.ac.touch - touch, ff: p.ac.ff == null ? null : p.ac.ff - all,
+    natural: Math.max(0, (p.ac.natural || 0) - nat), spell: sp };
+}
+// 校准用的计划：AC 减去法术给的；虔诚护盾是偏斜加值，CMD 也要减
+export function spellTargets(p) {
+  const ac = acTargets(p);
+  const sof = ac.spell?.shieldOfFaith || 0;
+  return { ...p, ac, cmd: p.cmd == null ? p.cmd : p.cmd - sof };
+}
+async function spellBuffs(sp) {
+  const out = [];
+  for (const [k, v] of Object.entries(sp)) {
+    const d = (await fromUuid(`Compendium.pf1.buffs.Item.${AC_SPELLS[k].buff}`))?.toObject();
+    if (!d) continue;
+    delete d._id;
+    d.system.active = false;
+    // 虔诚护盾、树肤术的加值按增益等级算：设成正好给出属性块那个数的等级
+    if (k === "shieldOfFaith") d.system.level = Math.max(1, (v - 2) * 6);
+    if (k === "barkskin") d.system.level = 3 + (v - 2) * 3;
+    d.flags = { ...(d.flags || {}), "zh-monsters": { mine: true, acSpell: k, bonus: v } };
+    out.push(d);
+  }
+  return out;
+}
+
 export async function buildOne(p, folder) {
   const log = [];
+  const acBook = p.ac;
+  p = spellTargets(p); // 法术给的 AC 不进「属性块修正」
   const actor = await Actor.create(baseActorData(p, folder));
+  if (p.ac.spell) {
+    await actor.createEmbeddedDocuments("Item", await spellBuffs(p.ac.spell));
+    log.push(`AC 里的法术（做成关着的增益）：${Object.entries(p.ac.spell).map(([k, v]) => `${k} +${v}`).join("、")}；属性块 AC ${acBook.normal}，不开增益 ${p.ac.normal}`);
+  }
   const cur = {};
   for (const g of p.gearList || []) if (g.currency) cur[g.currency] = (cur[g.currency] || 0) + g.qty;
   if (Object.keys(cur).length) await actor.update(Object.fromEntries(Object.entries(cur).map(([k, v]) => [`system.currency.${k}`, v])));
@@ -1283,9 +1352,16 @@ export async function syncSupplement({ update = false } = {}) {
       if (e.kind === "consumable") {
         const sp = await fromUuid(e.spell);
         if (!sp) { errors.push(`法术不存在：${e.spell}`); continue; }
+        // 环级要自己给（sl）：原来只给了 cl，DC 公式成了「10 + undefined + NaN」= 0（龙之欲 2026-10-28 发现）。
+        // 环级取各职业最低环级（PF1 自己的做法），找不到用法术的 level；施法者等级取属性块写的，没写取最低。
+        const S = CONFIG.Item.documentClasses.spell;
         const sd = sp.toObject();
-        if (e.cl) sd.cl = e.cl;
-        d = await pf1.documents.item.ItemSpellPF.toConsumable(sd, e.type);
+        const [minSl, minCl] = S.getMinimumCasterLevelBySpellData(sd);
+        const sl = minSl ?? sd.system.level ?? 1;
+        const cl = e.cl || minCl || 1;
+        const lc = sd.system.learnedAt?.class ?? {};
+        const spellType = lc.cleric !== undefined && lc.wizard === undefined ? "divine" : "arcane";
+        d = await S.toConsumable({ ...sd, sl, cl }, e.type, { spellType });
         const m = sp.name.match(/^(.*?)\s*\((.*)\)$/);
         const zh = m ? m[1] : sp.name, en = m ? m[2] : sp.name;
         d.name = `${zh}${CONS_ZH[e.type]}${e.cl ? `（CL ${e.cl}）` : ""} (${CONS_EN[e.type]} ${en})`;

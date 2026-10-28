@@ -165,13 +165,27 @@ def parse_hp(s):
         (fh.group(1) if fh else "")
 
 
+AC_PART = [("法师护甲", "mageArmor"), ("护盾术", "shieldSpell"), ("信仰护盾", "shieldOfFaith"), ("虔诚护盾", "shieldOfFaith"), ("树肤术", "barkskin"),
+           ("护甲", "armor"), ("盾牌", "shield"), ("盾", "shield"), ("偏斜", "deflection"), ("天生", "natural")]
+
+
 def parse_ac(s):
     tot = num(s)
     touch = re.search(r"接触\s*(\d+)", s or "")
     ff = re.search(r"措手不及\s*(\d+)", s or "")
     nat = re.search(r"\+\s*(\d+)\s*天生", s or "")
+    # 括号里的分项（+4 护甲，+3 敏捷，+3 天生）：法术给的 AC 要分出来，见 build_actor.js 的 spellAC
+    parts = {}
+    m = re.search(r"[（(]([^）)]*)[）)]", s or "")
+    for seg in re.split(r"[，,；;]", m.group(1) if m else ""):
+        v = re.match(r"\s*\+\s*(\d+)\s*(.+)", seg)
+        if not v:
+            continue
+        key = next((k for w, k in AC_PART if w in v.group(2)), None)
+        if key:
+            parts[key] = parts.get(key, 0) + int(v.group(1))
     return {"normal": tot, "touch": int(touch.group(1)) if touch else None, "ff": int(ff.group(1)) if ff else None,
-            "natural": int(nat.group(1)) if nat else 0}
+            "natural": int(nat.group(1)) if nat else 0, "parts": parts}
 
 
 def parse_speed(s):

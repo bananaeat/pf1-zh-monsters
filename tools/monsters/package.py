@@ -8,7 +8,7 @@
 import json, re, shutil, subprocess, zipfile
 from pathlib import Path
 
-VERSION = "1.0.7"
+VERSION = "1.0.8"
 REPO = "bananaeat/pf1-zh-monsters"  # 怪物版发布在这里（GitHub Release 放 zip 和 module.json）
 MODS = Path(r"E:/FoundryV13/data/Data/modules")
 CHN, MON = MODS / "pf1e_compendium_chn", MODS / "pf1-zh-monsters"
@@ -184,6 +184,12 @@ README_MON = """# PF1 中文怪物图鉴 v{version}
 """
 
 CHANGELOG = """# 更新记录
+
+## 1.0.8（2026-10-28）
+
+- 修正：属性块 AC 里算进了法师护甲、护盾术、虔诚护盾的 73 只怪物和 NPC（多在 NPC 图鉴），原来法术给的 AC 是永久的。现在角色上多了对应的增益（默认关着）：不开时 AC 不含法术，开了正好是属性块的数。戴着防御护腕的，按护甲加值不叠加处理。
+- 修正：怪物身上的卷轴、魔杖、药水 DC 显示成「10 + undefined + NaN」（共 1501 件），现在按 PF1 的规则算（10 + 法术环级 + 环级的一半）。补充合集包里的 431 件消耗品同样修好。
+- 已经拖进世界的怪物不会自动更新，请从合集包重新导入。
 
 ## 1.0.7（2026-10-25）
 

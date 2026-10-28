@@ -23,7 +23,8 @@ export async function run(label, n = 30) {
     for (const [p, e] of picks) {
       const src = await p.getDocument(e._id);
       const [a] = await Actor.createDocuments([src.toObject()]);
-      const pl = P.get(a.name + "|" + a.flags?.["zh-monsters"]?.source);
+      const pl0 = P.get(a.name + "|" + a.flags?.["zh-monsters"]?.source);
+      const pl = pl0 && M.spellTargets(pl0); // 法术 AC 做成关着的增益，按不开增益的数核对
       const A = a.system.attributes;
       const bad = [];
       if (pl) {
